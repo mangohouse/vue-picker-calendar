@@ -1,65 +1,45 @@
 <template>
-    <div id="one" :tipsData="tipsData" :startYear="startYear" :endYear="endYear">
-        <input type="text" v-model="setDateValue" @change="setDate(setDateValue)" ref="picker" readonly :originDateValue="originDateValue">
-        <!--div class="show-btn" v-show="showCalendarBtn" @click="show">日历</div-->
+    <div id="one" :tipsData="tipsData" class="calendar-box">
+        <input type="text" v-model="setDateValue" @click="calendarShow">
         <div v-show="showCalendar" class="show-calendars">
-    
-            <!--input type="text" v-model="setDateValue" @change="setDate(setDateValue)" readonly :originDateValue="originDateValue"-->
             <div class="close" @click="closeCalendar">关闭</div>
             <div class="box">
                 <div class="data-text">
-                    {{dataText}}
+                    <p>{{dataTexte}}</p>
                 </div>
                 <div class="set-month box-cont">
-                    <div class="pre-month" @click="preMonth">
-                        <</div>
-                            <div class="to-current" @click="toCurrent">当前日期</div>
-                            <div class="current-month">{{ currentYear }}/{{ String(+this.currentMonth+1) }}/{{this.currentDay}}</div>
-                            <div class="next-month" @click="nextMonth"> > </div>
-                    </div>
+                    <div class="pre-month" @click="preMonth">← </div>
+                    <div class="to-current" @click="toCurrent">当前日期</div>
+                    <div class="current-month" ref="picker">{{ currentYear }} - {{ String(+this.currentMonth+1) }} - {{currentDay}}</div>
+                    <div class="next-month" @click="nextMonth"> → </div>
+                </div>
     
-                    <div class="week box-cont">
-                        <div class="weekday">周一</div>
-                        <div class="weekday">周二</div>
-                        <div class="weekday">周三</div>
-                        <div class="weekday">周四</div>
-                        <div class="weekday">周五</div>
-                        <div class="weekday">周六</div>
-                        <div class="weekday">周日</div>
-                    </div>
-                    <div class="days-cont " @touchstart="touchStart($event)" @touchend="touchEnd($event)" @touchmove="touchMove($event)">
-                        <div :title="item.date" v-for=" item in dateObj.days" class="day-item" :class="{'red': !!item.tipsData,'today': item.date == realCurrentDate ,'current-day': item.day == currentDay, 'disable-item' : item.month == currentMonth}" @click="setDay(item)">
-                            <span>{{ item.day }}</span>
-                            <!--span>{{ item.date }}</span-->
-                        </div>
+                <div class="week box-cont">
+                    <div class="weekday">周一</div>
+                    <div class="weekday">周二</div>
+                    <div class="weekday">周三</div>
+                    <div class="weekday">周四</div>
+                    <div class="weekday">周五</div>
+                    <div class="weekday">周六</div>
+                    <div class="weekday">周日</div>
+                </div>
+                <div class="days-cont" @touchstart="touchStart($event)" @touchend="touchEnd($event)" @touchmove="touchMove($event)">
+                    <div :title="item.date" v-for=" item in dateObj.days" class="day-item" :class="{'red': !!item.tipsData,'today': item.date == realCurrentDate ,'current-day': item.day == currentDay && item.month == currentMonth+1, 'disable-item' : item.month == currentMonth}"
+                        @click="setDay(item)">
+                        <span>{{ item.day }}</span>
+                        <!--span>{{ item.date }}</span-->
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 </template>
 
 <script>
-    import Picker from '../../static/js/picker.min.js'
+    import Picker from 'better-picker'
     export default {
         name: 'datePicker',
-        props: {
-            tipsData: {
-                type: Object,
-                default: null
-            },
-            originDateValue: {
-                type: String,
-                default: null
-            },
-            startYear: {
-                type: Number,
-                default: 1990
-            },
-            endYear: {
-                type: Number,
-                default: 2020
-            }
-        },
+        props: ['tipsData'],
         data() {
             return {
                 today: 0,
@@ -72,7 +52,7 @@
                 realCurrentMonth: 0,
                 dateObj: {},
                 setDateValue: '',
-                // originSetDateValue: '', //设置初始日期
+                originDateValue: '2017-8-1', //设置初始日期
                 isSetDate: false,
                 data1: [],
                 data2: [],
@@ -80,8 +60,8 @@
                 nodePicker: null,
                 showCalendar: false,
                 showCalendarBtn: false,
-                dataText: '',
-                myPicker: null
+                dataTexte: '',
+                picker: null
             }
         },
         methods: {
@@ -100,9 +80,12 @@
             touchMove(e) {
                 // console.log(e.changedTouches[0].clientX - this.clientX)
             },
+            calendarShow() {
+                this.showCalendar = true
+            },
             closeCalendar() {
                 this.showCalendar = false
-                this.showCalendarBtn = true
+                this.picker.hide()
             },
             setCalendar(args) {
                 this.$emit('set-Calendar', args)
@@ -152,10 +135,9 @@
                     this.dataTexte = item.tipsData[0].contest
                 }
                 this.$emit('set-Calendar', item.tipsData)
-                item.tipsData ? this.dataText = item.tipsData[0].contest : this.dataText = ''
+                item.tipsData ? this.dataTexte = item.tipsData[0].contest : this.dataTexte = ''
                 this.currentDay = item.day
                 this.setDateValue = this.currentYear + '-' + String(+this.currentMonth + 1) + '-' + this.currentDay
-                // this.vuePicker()
             },
             nextMonth() { //下一月
                 this.currentMonth++
@@ -169,7 +151,7 @@
             init() { //日期初始化
                 this.getNowDate()
                 if (this.originDateValue == '' || !this.originDateValue) { //未设置初始日期时，默认系统当前日期
-                    // console.log(originDateValue)
+                    console.log(originDateValue)
                     this.getDate()
                 } else {
                     var dates = this.originDateValue.split('-')
@@ -180,6 +162,7 @@
     
             },
             getDate() { //根据选择月份设置日历列表数据
+    
                 this.dateObj = {
                     date: this.realCurrentDate,
                     days: []
@@ -198,12 +181,16 @@
                         tipsData: null
                     }
                     for (var key in this.tipsData) {
+                        // console.log(key, this.tipsData[key])
                         if (key == itemDate1) {
                             obj.tipsData = this.tipsData[key]
+                            // console.log(obj.tipsData)
                         }
                     }
                     this.dateObj.days.push(obj)
+    
                 };
+                console.log(this.dateObj)
                 for (var i = this.monthOfDays[this.currentMonth - 1]; i > this.monthOfDays[this.currentMonth - 1] - this.dayOfWeek + 1; i--) { //创建当前上一月的部分天数数据
                     var real_month2 = this.currentMonth
                     var itemDate2 = this.currentYear + '-' + real_month2 + '-' + i
@@ -224,7 +211,7 @@
                 var that = this
                 var nameEl = that.nodePicker
                 that.data1 = []
-                for (var i = that.startYear; i < that.endYear; i++) {
+                for (var i = 2010; i < 2020; i++) {
                     var obj = {
                         text: i,
                         value: i
@@ -244,17 +231,14 @@
                 for (var i = 1; i <= 31; i++) {
                     var obj = {
                         text: i,
-                        value: i,
-                        date: that.currentYear + '-' + String(+that.currentMonth + 1) + '-' + i,
-                        hasTips: false,
-                        dataTips: null
+                        value: i
                     }
                     that.data3.push(obj)
                 }
-                var yearIndex, monthIndex, dayIndex
-                var picker = that.myPicker = new Picker({
+                // console.log(that.data1, that.data2, that.data3)
+                var picker = that.picker = new Picker({
                     data: [that.data1, that.data2, that.data3],
-                    selectedIndex: [that.currentYear - that.startYear, that.currentMonth, that.currentDay - 1],
+                    selectedIndex: [that.data1.length / 2, 6, 15],
                     title: '日期选择'
                 });
     
@@ -269,29 +253,18 @@
                     }
                     if (index == 1) {
                         that.currentMonth = that.data2[selectedIndex].value
+                        // that.currentMonth+1 = that.data2[selectedIndex].text
                     }
                     if (index == 2) {
                         that.currentDay = that.data3[selectedIndex].text
-                        that.$emit('set-Calendar', that.data3[selectedIndex].dataTips)
+    
                     }
                     monthDays = new Array(31, 28 + that.isLeap(that.currentYear), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31) //创建月份数组
                     that.data3 = []
                     for (var i = 1; i <= monthDays[that.currentMonth]; i++) {
                         var obj = {
                             text: i,
-                            value: i,
-                            date: that.currentYear + '-' + String(+that.currentMonth + 1) + '-' + i,
-                            hasTips: false,
-                            dataTips: null
-                        }
-                        for (var key in that.tipsData) {
-    
-                            if (key == obj.date) {
-                                obj.text = i,
-                                    obj.hasTips = true
-                                obj.dataTips = that.tipsData[key]
-                            }
-    
+                            value: i
                         }
                         that.data3.push(obj)
                     }
@@ -299,11 +272,14 @@
                     var setDates = that.currentYear + '-' + that.currentMonth + '-' + that.currentDay
                     that.setDate(setDates)
                 });
-                picker.on('picker.valuechange', function() {
-                    that.showCalendar == true ? that.showCalendar = false : that.showCalendar = true
+    
+                picker.on('picker.valuechange', function(selectedVal, selectedIndex) {
+                    that.showCalendar = false
                 });
+    
                 nameEl.addEventListener('click', function() {
                     picker.show();
+                    that.showCalendar = false
                 });
             }
         },
@@ -321,11 +297,8 @@
     }
 </script>
 
+<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-    body {
-        margin: 0;
-    }
-    
     .box {
         width: 100%;
     }
@@ -358,12 +331,12 @@
         width: 14%;
         height: 30px;
         line-height: 30px;
-        // display: inline-block;
         float: left;
         text-align: center;
         font-size: 12px;
         box-sizing: border-box;
         border: 1px solid transparent;
+        cursor: pointer;
     }
     
     span {
@@ -371,22 +344,16 @@
     }
     
     .current-day {
-        /*background: rgba(57, 140, 247, 0.73);*/
-        border: 1px solid #ccc;
+        border: 1px solid #112;
     }
     
     .today {
-        background: rgba(57, 140, 247, 0.73);
-        border: 1px solid #fff;
-    }
-    
-    .red {
-        background: rgba(255, 9, 9, 0.46);
-        border: 1px solid #fff;
+        background: #62edfb;
+        border: 1px solid #112;
     }
     
     .set-month {
-        /*width: 200px;*/
+        width: 80%;
         height: 50px;
         margin: 0 auto;
         font-size: 16px;
@@ -395,36 +362,23 @@
         -moz-box-pack: justify;
         -webkit-box-pack: justify;
         box-pack: justify;
-    }
-    
-    .set-month div {
-        padding: 0 20px;
+        min-width: 280px;
+        cursor: pointer;
     }
     
     .disable-item {
         color: #aaa;
-        border: 1px solid transparent;
     }
     
-    .pre-month,
-    .next-month {
-        color: #666;
-        font-size: 22px;
-        font-weight: bold;
+    .red {
+        border: 1px solid red;
     }
     
     .data-text {}
     
-    .show-btn {
-        position: fixed;
-        bottom: 195px;
-        right: 65px;
-        z-index: 9999;
-    }
-    
     .data-text {
-        min-height: 28px;
-        line-height: 28px;
+        min-height: 20px;
+        line-height: 20px;
         width: 90%;
         margin: 0 auto;
         word-wrap: break-word;
@@ -438,16 +392,38 @@
         width: 60px;
         height: 30px;
         line-height: 30px;
-        top: /*padding: 5px;*/
+        /*padding: 5px;*/
     }
     
-    .show-calendars {
-        position: fixed;
-        bottom: 0;
-        z-index: 999;
-        background: #fff;
-        padding-top: 10px;
-        height: 295px;
-        width: 100%;
+    .calendar-box {
+        position: relative;
+        width: 200px;
+    }
+    
+    @media screen and (max-width: 800px) {
+        .show-calendars {
+            position: fixed;
+            bottom: 0;
+            z-index: 999;
+            background: #fff;
+            padding-top: 10px;
+            height: 295px;
+            width: 100%;
+        }
+    }
+    
+    @media screen and (min-width: 801px) {
+        .show-calendars {
+            position: absolute;
+            z-index: 999;
+            background: #fff;
+            padding-top: 10px;
+            height: 295px;
+            width: 300px;
+            left: 0;
+            border: 1px solid #ccc;
+        }
     }
 </style>
+
+</html>
